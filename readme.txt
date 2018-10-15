@@ -3,9 +3,11 @@
  It's written in C# so you'll need at least Microsoft .NET Framework Version 2.0
 
 ---------------------------------------------
+Release Notes
 
- Site : http://r4di.us/autoputty/
- Source : https://github.com/r4dius/AutoPuTTY
+v.0.24.4
+- Supports tvnviewer
+
 
 ---------------------------------------------
 
@@ -59,5 +61,3 @@
  - code to set image opacity : http://www.geekpedia.com/code110_Set-Image-Opacity-Using-Csharp.html
 
 ---------------------------------------------
-
- Please report bugs or lost money to autoputty@r4di.us

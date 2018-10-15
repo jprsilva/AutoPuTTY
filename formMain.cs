@@ -720,83 +720,7 @@ namespace AutoPuTTY
                             }
                             break;
                         case "2": //VNC
-                            string[] vncextractpath = ExtractFilePath(Settings.Default.vncpath);
-                            string vncpath = vncextractpath[0];
-                            string vncargs = vncextractpath[1];
-
-                            if (File.Exists(vncpath))
-                            {
-                                string host;
-                                string port;
-                                string[] hostport = _host.Split(':');
-                                int split = hostport.Length;
-
-                                if (split == 2)
-                                {
-                                    host = hostport[0];
-                                    port = hostport[1];
-                                }
-                                else
-                                {
-                                    host = _host;
-                                    port = "5900";
-                                }
-
-                                string vncout = "";
-
-                                if (Settings.Default.vncfilespath != "" && ReplaceA(ps, pr, Settings.Default.vncfilespath) != "\\")
-                                {
-                                    vncout = ReplaceA(ps, pr, Settings.Default.vncfilespath + "\\");
-
-                                    try
-                                    {
-                                        Directory.CreateDirectory(vncout);
-                                    }
-                                    catch
-                                    {
-                                        MessageBox.Show(this, "Output path for generated \".vnc\" connection files doesn't exist.\nFiles will be generated in the current path.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                        vncout = "";
-                                    }
-                                }
-
-                                TextWriter vncfile = new StreamWriter(vncout + ReplaceU(f, server[0].ToString()) + ".vnc");
-                                vncfile.WriteLine("[Connection]");
-                                if (host != "") vncfile.WriteLine("host=" + host.Trim());
-                                if (port != "") vncfile.WriteLine("port=" + port.Trim());
-                                if (_user != "") vncfile.WriteLine("username=" + _user);
-                                if (_pass != "") vncfile.WriteLine("password=" + cryptVNC.EncryptPassword(_pass));
-                                vncfile.WriteLine("[Options]");
-                                if (Settings.Default.vncfullscreen) vncfile.WriteLine("fullscreen=1");
-                                if (Settings.Default.vncviewonly)
-                                {
-                                    vncfile.WriteLine("viewonly=1"); //ultravnc
-                                    vncfile.WriteLine("sendptrevents=0"); //realvnc
-                                    vncfile.WriteLine("sendkeyevents=0"); //realvnc
-                                    vncfile.WriteLine("sendcuttext=0"); //realvnc
-                                    vncfile.WriteLine("acceptcuttext=0"); //realvnc
-                                    vncfile.WriteLine("sharefiles=0"); //realvnc
-                                }
-
-                                if (_pass != "" && _pass.Length > 8) vncfile.WriteLine("protocol3.3=1"); // fuckin vnc 4.0 auth
-                                vncfile.Close();
-
-                                Process myProc = new Process();
-                                myProc.StartInfo.FileName = Settings.Default.vncpath;
-                                myProc.StartInfo.Arguments = "-config \"" + vncout + ReplaceU(f, server[0].ToString()) + ".vnc\"";
-                                if (vncargs != "") myProc.StartInfo.Arguments += " " + vncargs;
-                                try
-                                {
-                                    myProc.Start();
-                                }
-                                catch (System.ComponentModel.Win32Exception)
-                                {
-                                    //user canceled
-                                }
-                            }
-                            else
-                            {
-                                if (MessageBox.Show(this, "Could not find file \"" + vncpath + "\".\nDo you want to change the configuration ?", "Error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error) == DialogResult.OK) optionsform.bVNCPath_Click(type);
-                            }
+                            ConnectVNC(type, server);
                             break;
                         case "3": //WinSCP (SCP)
                             winscpprot = "scp://";
@@ -914,6 +838,101 @@ namespace AutoPuTTY
                             break;
                     }
                 }
+            }
+        }
+
+        private void ConnectVNC(string type, ArrayList server)
+        {
+            string _host = Decrypt(server[1].ToString());
+            string _user = Decrypt(server[2].ToString());
+            string _pass = Decrypt(server[3].ToString());
+            string _type = type == "-1" ? server[4].ToString() : type;
+            string[] f = { "\\", "/", ":", "*", "?", "\"", "<", ">", "|" };
+            string[] ps = { "/", "\\\\" };
+            string[] pr = { "\\", "\\" };
+
+            string[] vncextractpath = ExtractFilePath(Settings.Default.vncpath);
+            string vncpath = vncextractpath[0];
+            string vncargs = vncextractpath[1];
+
+            bool isTvnViewer = vncpath.EndsWith("tvnviewer.exe", StringComparison.OrdinalIgnoreCase);
+
+            if (File.Exists(vncpath))
+            {
+                string host;
+                string port;
+                string[] hostport = _host.Split(':');
+                int split = hostport.Length;
+
+                if (split == 2)
+                {
+                    host = hostport[0];
+                    port = hostport[1];
+                }
+                else
+                {
+                    host = _host;
+                    port = "5900";
+                }
+
+                string vncout = "";
+
+                if (Settings.Default.vncfilespath != "" && ReplaceA(ps, pr, Settings.Default.vncfilespath) != "\\")
+                {
+                    vncout = ReplaceA(ps, pr, Settings.Default.vncfilespath + "\\");
+
+                    try
+                    {
+                        Directory.CreateDirectory(vncout);
+                    }
+                    catch
+                    {
+                        MessageBox.Show(this, "Output path for generated \".vnc\" connection files doesn't exist.\nFiles will be generated in the current path.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        vncout = "";
+                    }
+                }
+
+                TextWriter vncfile = new StreamWriter(vncout + ReplaceU(f, server[0].ToString()) + ".vnc");
+                vncfile.WriteLine("[Connection]");
+                if (host != "") vncfile.WriteLine("host=" + host.Trim());
+                if (port != "") vncfile.WriteLine("port=" + port.Trim());
+                if (_user != "") vncfile.WriteLine("username=" + _user);
+                if (_pass != "") vncfile.WriteLine("password=" + cryptVNC.EncryptPassword(_pass));
+                vncfile.WriteLine("[Options]");
+                if (isTvnViewer) vncfile.WriteLine("fitwindow=1");
+                if (Settings.Default.vncfullscreen) vncfile.WriteLine("fullscreen=1");
+                if (Settings.Default.vncviewonly)
+                {
+                    vncfile.WriteLine("viewonly=1"); //ultravnc
+                    vncfile.WriteLine("sendptrevents=0"); //realvnc
+                    vncfile.WriteLine("sendkeyevents=0"); //realvnc
+                    vncfile.WriteLine("sendcuttext=0"); //realvnc
+                    vncfile.WriteLine("acceptcuttext=0"); //realvnc
+                    vncfile.WriteLine("sharefiles=0"); //realvnc
+                }
+
+                if (_pass != "" && _pass.Length > 8) vncfile.WriteLine("protocol3.3=1"); // fuckin vnc 4.0 auth
+                vncfile.Close();
+
+                Process myProc = new Process();
+                myProc.StartInfo.FileName = Settings.Default.vncpath;
+                string arguments = 
+                    isTvnViewer ? "-optionsfile=\"" + vncout + ReplaceU(f, server[0].ToString()) + ".vnc\"" 
+                    : "-config \"" + vncout + ReplaceU(f, server[0].ToString()) + ".vnc\"";
+                myProc.StartInfo.Arguments = arguments;
+                if (vncargs != "") myProc.StartInfo.Arguments += " " + vncargs;
+                try
+                {
+                    myProc.Start();
+                }
+                catch (System.ComponentModel.Win32Exception)
+                {
+                    //user canceled
+                }
+            }
+            else
+            {
+                if (MessageBox.Show(this, "Could not find file \"" + vncpath + "\".\nDo you want to change the configuration ?", "Error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error) == DialogResult.OK) optionsform.bVNCPath_Click(type);
             }
         }
 

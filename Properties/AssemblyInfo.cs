@@ -29,5 +29,5 @@ using AutoPuTTY.Properties;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("0.24.3")]
-[assembly: AssemblyFileVersion("0.24.3")]
+[assembly: AssemblyVersion("0.24.4")]
+[assembly: AssemblyFileVersion("0.24.4")]
